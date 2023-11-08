@@ -1,1 +1,46 @@
-https://mirror-hk.koddos.net/CTAN/systems/win32/miktex/setup/windows-x64/miktexsetup-5.5.0+1763023-x64.zip
+name: portable-release-actions-workflow
+on:
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - 'v*' # 2023.1.17f1
+
+jobs:
+  build:
+    name: Create Release
+    runs-on: windows-latest
+    env:
+      targetZip: miktex-portable-${{ github.ref_name }}.zip
+    steps:
+      - uses: actions/checkout@v4
+      
+      - shell: cmd
+        run: | 
+          curl https://mirror-hk.koddos.net/CTAN/systems/win32/miktex/setup/windows-x64/miktexsetup-5.5.0+1763023-x64.zip -L -O &&^
+          7z x miktexsetup-5.5.0+1763023-x64.zip -o"%USERPROFILE%\Downloads\miktexsetup-5.5.0+1763023-x64"
+      
+      - shell: cmd
+        run: | 
+          curl https://github.com/StrawberryPerl/Perl-Dist-Strawberry/releases/download/SP_5380_5361/strawberry-perl-5.38.0.1-64bit-portable.zip -L -O &&^
+          7z x strawberry-perl-5.38.0.1-64bit-portable.zip -o"%USERPROFILE%\Downloads\strawberry-perl-5.38.0.1-64bit-portable"
+
+      - shell: cmd
+        run: |
+          set WORKSPACE=%CD%
+          cd %USERPROFILE%\Downloads\miktexsetup-5.5.0+1763023-x64 &&^
+          cmd /c "%WORKSPACE%\make-portable-installation.cmd" &&^
+          dir
+
+      - name: Archive Release
+        uses: thedoctor0/zip-release@master
+        with:
+          type: 'zip'
+          directory: "$USERPROFILE/installation"
+          filename: "${{ env.targetZip }}"
+          
+      - name: Release prebuilt
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "$USERPROFILE/installation/${{ env.targetZip }}"
+          allowUpdates: true
+          token: ${{ secrets.GITHUB_TOKEN }}
