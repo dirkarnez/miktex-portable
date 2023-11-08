@@ -28,6 +28,7 @@ jobs:
         run: |
           set WORKSPACE=%CD%
           cd %USERPROFILE%\Downloads\miktexsetup-5.5.0+1763023-x64 &&^
+          dir &&^
           cmd /c "%WORKSPACE%\make-portable-installation.cmd" &&^
           dir
 
